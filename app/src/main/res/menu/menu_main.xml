@@ -1,0 +1,39 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="ca.eonsound.esm.MainActivity">
+
+    <item
+        android:id="@+id/action_score"
+        android:orderInCategory="100"
+        android:title="Show scores"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="101"
+        android:title="@string/action_settings"/>
+    <item
+        android:id="@+id/action_scan"
+        android:orderInCategory="102"
+        android:title="Connect to manometer" />
+
+    <item
+        android:id="@+id/action_clear"
+        android:orderInCategory="103"
+        android:title="Clear Data" />
+
+    <item
+        android:id="@+id/action_manual"
+        android:orderInCategory="104"
+        android:title="User's manual" />
+
+    <item
+        android:id="@+id/action_devinfo"
+        android:orderInCategory="105"
+        android:title="Device info" />
+
+    <item
+        android:id="@+id/action_exit"
+        android:orderInCategory="106"
+        android:title="Exit" />
+</menu>
