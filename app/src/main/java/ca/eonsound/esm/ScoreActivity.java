@@ -10,6 +10,8 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -221,45 +223,28 @@ public class ScoreActivity extends AppCompatActivity {
 
     }
 
-/*    class AdapterScore extends BaseAdapter {
-        private ArrayList<CScore> aScore = Settings.getInstance().getScore();
-
-        public void addScore(CScore score) {
-            aScore.add(score);
-        }
-        
-        @Override
-        public int getCount() {
-            return aScore.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return aScore.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            convertView = getLayoutInflater().inflate(R.layout.listitem_score, null);
-            
-            TextView viewScore = convertView.findViewById(R.id.tvScoreValue);
-            TextView viewTstamp = convertView.findViewById(R.id.tvScoreTimestamp);
-            TextView viewPlaytime = convertView.findViewById(R.id.tvScorePlaytime);
-
-            CScore score = aScore.get(position);
-            
-            viewScore.setText(score.strScore);
-            viewTstamp.setText(score.strTstamp);
-            viewPlaytime.setText(score.strPlaytime);
-
-            return convertView;
-        }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_score, menu);
+        return true;
     }
 
- */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_show_progress) {
+            Intent intent = new Intent(this, ActivityProgress.class);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
 }

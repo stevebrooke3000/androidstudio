@@ -15,7 +15,10 @@
         android:roundIcon="@mipmap/esm_icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".DevInfoActivity"/>
+        <activity
+            android:name=".ActivityProgress"
+            android:exported="false" />
+        <activity android:name=".DevInfoActivity" />
         <activity android:name=".ScoreActivity" />
 
         <service

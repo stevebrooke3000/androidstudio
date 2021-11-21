@@ -202,7 +202,7 @@ public class CViewModelMain extends ViewModel {
         // set up the line plot colors
         seriesLine.setColor(Color.BLUE);
         seriesMax.setColor(Color.RED);
-        seriesMin.setColor(Color.RED);
+        seriesMin.setColor(Color.rgb(255,165,0)); // orange
 
         dMaxPressure = 0;
         dMinPressure = 1000;
