@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConnectActivity extends AppCompatActivity {
+    private final static String TAG = ConnectActivity.class.getSimpleName();
 
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private BluetoothAdapter mBluetoothAdapter;
@@ -60,6 +61,7 @@ public class ConnectActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "on create");
         setContentView(R.layout.activity_connect);
         Toast.makeText(this, "select manometer device", Toast.LENGTH_LONG).show();
 
@@ -140,6 +142,7 @@ public class ConnectActivity extends AppCompatActivity {
     @Override
     protected  void onStart() {
         super.onStart();
+        Log.d(TAG, "on start");
 
         // on startup, go directly to scanning for devices
         progressScanning.setVisibility(View.VISIBLE);
@@ -217,37 +220,42 @@ public class ConnectActivity extends AppCompatActivity {
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.i("callbackType", String.valueOf(callbackType));
-            Log.i("result", result.toString());
+            Log.i(TAG, "scan result callbackType:" + String.valueOf(callbackType));
+            Log.i(TAG, "scan result:" + result.toString());
 
-            // add the device to the list
             BluetoothDevice device = result.getDevice();
-
-            if (device.getName().startsWith("eonsound") ) {
-                mLeDeviceListAdapter.addDevice(device);
-                mLeDeviceListAdapter.notifyDataSetChanged();
-            }
 
             // if this is our paired device, then return it
             String strDevAddr = Settings.getInstance().getDevAddr();
+            String strDevName = device.getName();
+            Log.d(TAG, "found device address: " + strDevAddr + ", name: " + strDevName);
+
             if (strDevAddr != null) {
                 if ( strDevAddr.equals(device.getAddress()) ) {
-                    Log.d("found device", "address = " + device.getAddress());
+                    Log.d(TAG, "found paired device");
                     vReturnDevice((device));
                 }
 
+            }
+
+            // add the device to the list
+           if (strDevName != null) {
+                if (strDevName.startsWith("eonsound")) {
+                    mLeDeviceListAdapter.addDevice(device);
+                    mLeDeviceListAdapter.notifyDataSetChanged();
+                }
             }
         }
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             for (ScanResult sr : results) {
-                Log.i("ScanResult - Results", sr.toString());
+                Log.i(TAG, "ScanResult - Results" + sr.toString());
             }
         }
 
         @Override
         public void onScanFailed(int errorCode) {
-            Log.e("Scan Failed", "Error Code: " + errorCode);
+            Log.e(TAG, "Scan Failed, Error Code: " + errorCode);
         }
 
     };
@@ -288,6 +296,8 @@ public class ConnectActivity extends AppCompatActivity {
 
 
     void vReturnDevice(BluetoothDevice device) {
+        Log.d(TAG, "return device");
+
         if (device == null)
             return;
 
@@ -304,6 +314,7 @@ public class ConnectActivity extends AppCompatActivity {
 
         setResult(RESULT_OK, intent);
         finish();
+
     }
 
 }
