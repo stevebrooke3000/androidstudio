@@ -94,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "create main activity");
+
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState == null) {
@@ -378,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
     private void displayGattServices(List<BluetoothGattService> gattServices) {
         if (gattServices == null)
             return;
-
+        Log.d(TAG, "display gatt services");
         for (BluetoothGattService gattService : gattServices) {
             UUID uuidService = gattService.getUuid();
             if (uuidService.compareTo(UUID_DEVICE_INFO) == 0) {
@@ -568,6 +570,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
+        Log.d(TAG, "on request permission result");
         switch (requestCode){
             case 1: {
                 if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
