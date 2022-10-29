@@ -24,7 +24,8 @@
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Units" />
+                android:text="Units"
+                android:visibility="gone" />
 
             <RadioGroup
                 android:id="@+id/radioGroup"
@@ -35,25 +36,29 @@
                     android:id="@+id/rbInchesH2O"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Inches Water" />
+                    android:text="Inches Water"
+                    android:visibility="gone" />
 
                 <RadioButton
                     android:id="@+id/rbPSI"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="PSI" />
+                    android:text="PSI"
+                    android:visibility="gone" />
 
                 <RadioButton
                     android:id="@+id/rbKPa"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Pascals" />
+                    android:text="Pascals"
+                    android:visibility="gone" />
 
                 <RadioButton
                     android:id="@+id/rbmmHg"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="mm Hg" />
+                    android:text="mm Hg"
+                    android:visibility="gone" />
 
             </RadioGroup>
         </LinearLayout>
@@ -110,9 +115,34 @@
                 android:maxHeight="40dp"
                 android:minHeight="40dp"
                 android:tooltipText="set the readings filter time constant" />
+
+            <TextView
+                android:id="@+id/tvAutoScan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:gravity="bottom"
+                android:text="Auto scan for device on startup" />
+
+            <CheckBox
+                android:id="@+id/checkboxAutoScan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="40dp"
+                android:minHeight="40dp"
+                android:text="Auto scan for device on startup" />
+
         </LinearLayout>
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnOK"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal|fill_vertical"
+        android:layout_marginTop="100dp"
+        android:text="@android:string/ok" />
 
 
 </LinearLayout>
