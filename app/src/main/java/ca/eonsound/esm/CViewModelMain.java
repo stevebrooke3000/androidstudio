@@ -2,18 +2,18 @@ package ca.eonsound.esm;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Environment;
+//import android.os.Environment;
 
 import androidx.lifecycle.ViewModel;
 
 import java.io.*;
-import java.io.Serializable;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+//import java.io.Serializable;
+//import java.io.BufferedReader;
+//import java.io.FileInputStream;
+//import java.io.FileNotFoundException;
+//import java.io.FileOutputStream;
+//import java.io.IOException;
+//import java.io.InputStreamReader;
 
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
@@ -30,7 +30,7 @@ public class CViewModelMain extends ViewModel {
     private static final double kPmax = 300.0;
     private static final double kPmin = 0.0;
 
-    private String mDeviceAddress;
+    //private String mDeviceAddress;
 
     private CVecRawPressure vecRawPressure;
 
@@ -43,7 +43,7 @@ public class CViewModelMain extends ViewModel {
     private CFilter filter = new CFilter(20);
 
     private double dDelayCountdown_s;
-    private boolean bModeAcq;
+    //private boolean bModeAcq;
     private double dMaxPressure;
     private double dMinPressure;
     private double dTime = 0;
@@ -53,12 +53,14 @@ public class CViewModelMain extends ViewModel {
     EState eState = EState.kIdle;
 
 
-    public void setDeviceAddress(String _devAddr) {
+/*    public void setDeviceAddress(String _devAddr) {
         mDeviceAddress = _devAddr;
     }
     public String getDeviceAddress() {
         return mDeviceAddress;
     }
+
+ */
 
     public CVecRawPressure getVecRawPressure() {
         if (vecRawPressure == null)
@@ -109,11 +111,18 @@ public class CViewModelMain extends ViewModel {
         return seriesHist;
     }
 
-    private double dGetPressure(int lPressure_raw) {
+    public double dConvertPressure(int lPressure_raw) {
+        Settings settings = Settings.getInstance();
+
         // convert the raw data to mmHG
-        double dO = (double) lPressure_raw;
-        double dPressure_mmHg = (dO - kOmin) * (kPmax - kPmin) / (kOmax - kOmin) + kPmin;
-        double dPressure = dPressure_mmHg * Settings.getInstance().getUnitsConversion();
+        double dPressure_raw = (double) lPressure_raw;
+        double dPressure_mmHg;
+        if (settings.bIsUse_mmHg())
+            dPressure_mmHg = dPressure_raw * 0.001;
+        else
+            dPressure_mmHg = (dPressure_raw - kOmin) * (kPmax - kPmin) / (kOmax - kOmin) + kPmin;
+
+        double dPressure = dPressure_mmHg * settings.getUnitsConversion();
 
         if (dPressure < 0)
             dPressure = 0;
@@ -121,19 +130,11 @@ public class CViewModelMain extends ViewModel {
         return dPressure;
     }
 
-    public EState appendData(int lPressure_raw) {
+    public EState appendData(double dPressure, int lPressure_raw) {
         Settings settings = Settings.getInstance();
 
-        // convert the raw data to mmHG
-        double dO = (double) lPressure_raw;
-        double dPressure_mmHg = (dO - kOmin) * (kPmax - kPmin) / (kOmax - kOmin) + kPmin;
-        double dPressure = dPressure_mmHg * settings.getUnitsConversion();
-
-        if (dPressure < 0)
-            dPressure = 0;
-
         // update bar plot
-        seriesBar.resetData(new DataPoint[]{new DataPoint(0.5, dPressure)});
+        getSeriesBar().resetData(new DataPoint[]{new DataPoint(0.5, dPressure)});
         double dAvg = filter.dNext(dPressure);
 
         switch (eState) {
@@ -209,7 +210,7 @@ public class CViewModelMain extends ViewModel {
         dTime = 0;
 
         dDelayCountdown_s = 0; //settings.getDelay_s();
-        bModeAcq = true;
+        //bModeAcq = true;
 
         filter.vReset((int)(Settings.getInstance().getSmooth_s() * 10));
     }
@@ -222,7 +223,7 @@ public class CViewModelMain extends ViewModel {
     public void vSaveToFile(String strFname, Context context) {
 
         CPressureFile fileData = new CPressureFile(getVecRawPressure());
-        CVecRawPressure vecRawPressure = getVecRawPressure();
+        //CVecRawPressure vecRawPressure = getVecRawPressure();
         try {
             //internal
             FileOutputStream f_out = context.openFileOutput(strFname, Context.MODE_PRIVATE);
@@ -254,8 +255,11 @@ public class CViewModelMain extends ViewModel {
             CPressureFile filePressure = (CPressureFile) obj;
 
             vClearLines();
-            for (int i = 0; i < filePressure.nSamples; i++)
-                appendData(filePressure.alPressure[i]);
+            for (int i = 0; i < filePressure.nSamples; i++) {
+                int lPressure = filePressure.alPressure[i];
+                double dPressure = dConvertPressure(lPressure);
+                appendData(dPressure, lPressure);
+            }
 
             eState = EState.kIdle;
         }
