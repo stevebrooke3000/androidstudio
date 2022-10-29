@@ -2,13 +2,15 @@ package ca.eonsound.esm;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProviders;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import androidx.appcompat.app.ActionBar;
+import android.view.MenuItem;
 
 public class DevInfoActivity extends AppCompatActivity {
     Settings settings;
@@ -21,10 +23,20 @@ public class DevInfoActivity extends AppCompatActivity {
     private String mDeviceAddress;
     Button btnForget;
 
+    // calibration
+    EditText edtCoeff0;
+    EditText edtCoeff1;
+    Button btnSetCoeff;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dev_info);
+
+        // back action
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
 
         settings = Settings.getInstance();
 
@@ -45,6 +57,11 @@ public class DevInfoActivity extends AppCompatActivity {
 
         String strDevAddr = getResources().getString(R.string.device_addr) + settings.getDevAddr();
         tvDevAddr.setText(strDevAddr);
+
+        // Calibration
+        edtCoeff0 = findViewById(R.id.edtCoeff0);
+        edtCoeff1 = findViewById(R.id.edtCoeff1);
+        btnSetCoeff = findViewById(R.id.btnSetCoeff);
 
         btnForget.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,7 +91,37 @@ public class DevInfoActivity extends AppCompatActivity {
 
             }
         });
+/*
+        btnSetCoeff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Intent intent = new Intent();
+                setResult(RESULT_OK, intent);
+                if (edtCoeff0.toString() == null)
+                    intent.putExtra("Coeff0", 0.0);
+                else
+                    intent.putExtra("Coeff0", Float.parseFloat(edtCoeff0.getText().toString()));
+
+                if (edtCoeff1.toString() == null)
+                    intent.putExtra("Coeff1", 1.0);
+                else
+                    intent.putExtra("Coeff1", Float.parseFloat(edtCoeff1.getText().toString()));
+
+                finish();
+            }
+        });
+ */
 
     }
 
+    // this event will enable the back function to the button on press
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }
