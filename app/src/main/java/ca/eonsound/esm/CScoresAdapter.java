@@ -1,23 +1,18 @@
 package ca.eonsound.esm;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import java.util.List;
 
 public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHolder> {
     private List<CScore> listScores;
-    private ViewGroup mParent;
     private static IClickListener onclicklistener;
 
     public interface IClickListener {
@@ -37,7 +32,7 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
 
     // Provide a direct reference to each of the views within a data item
     // Used to cache the views within the item layout for fast access
-    public class ViewHolder extends RecyclerView.ViewHolder  implements View.OnClickListener, View.OnLongClickListener {
+    public static class ViewHolder extends RecyclerView.ViewHolder  implements View.OnClickListener, View.OnLongClickListener {
         // Your holder should contain a member variable
         // for any view that will be set as you render a row
         TextView viewScore;
@@ -82,7 +77,6 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 // Create a new view, which defines the UI of the list item
-        mParent = parent;
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
@@ -113,10 +107,13 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
         return listScores.size();
     }
 
+    /*
     public void deleteItem(int position) {
         listScores.remove(position);
         notifyItemRemoved(position);
     }
+
+     */
 
     public void onSwiped(final int position) {
         onclicklistener.onSwipe(position);
