@@ -1,5 +1,4 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="ca.eonsound.esm.MainActivity">
 
@@ -12,11 +11,6 @@
         android:id="@+id/action_settings"
         android:orderInCategory="101"
         android:title="@string/action_settings"/>
-    <item
-        android:id="@+id/action_scan"
-        android:orderInCategory="102"
-        android:title="Connect to manometer" />
-
     <item
         android:id="@+id/action_clear"
         android:orderInCategory="103"
@@ -31,6 +25,11 @@
         android:id="@+id/action_devinfo"
         android:orderInCategory="105"
         android:title="Device info" />
+
+    <item
+        android:id="@+id/action_scan"
+        android:orderInCategory="102"
+        android:title="Connect to manometer" />
 
     <item
         android:id="@+id/action_exit"
