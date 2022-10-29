@@ -16,17 +16,15 @@
 
 package ca.eonsound.esm;
 
-import java.util.HashMap;
 
 /**
  * This class includes a small subset of standard GATT attributes for demonstration purposes.
  * see https://btprodspecificationrefs.blob.core.windows.net/assigned-values/16-bit%20UUID%20Numbers%20Document.pdf
  */
 public class SampleGattAttributes {
-    private static HashMap<String, String> attributes = new HashMap();
+    //private static HashMap<String, String> attributes = new HashMap<>();
     public static String HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    //public static String HEART_RATE_SERVICE = "0000180d-0000-1000-8000-00805f9b34fb";
 
     public static String DEVICE_INFO_UUID = "0000180a-0000-1000-8000-00805f9b34fb";
     public static String GATT_OBJ_MODEL_NUMBER_STR_UUID = "00002a24-0000-1000-8000-00805f9b34fb";
@@ -41,6 +39,7 @@ public class SampleGattAttributes {
 
     public static String BAGPIPE_MANOMETER_SERVICE = "25112096-1bf5-1aa5-4841-2ee3960eb110";
     public static String CHARACTERISTIC_PRESSURE = "00002a6d-0000-1000-8000-00805f9b34fb";
+    public static String strGattUuidChar_Coefficient = "00002ae8-0000-1000-8000-00805f9b34fb";
     public static String GATT_CHR_UUID_MEASUREMENT_INTERVAL = "00002a21-0000-1000-8000-00805f9b34fb";
 /*
     static {
