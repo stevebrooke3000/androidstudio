@@ -13,14 +13,13 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class ActivityProgress extends AppCompatActivity {
-    private GraphView graphProgress;
     private LineGraphSeries<DataPoint> seriesProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_progress);
-        graphProgress = findViewById(R.id.graphProgress);
+        GraphView graphProgress = findViewById(R.id.graphProgress);
 
         Viewport viewport = graphProgress.getViewport();
         viewport.setXAxisBoundsManual(true);
@@ -31,7 +30,7 @@ public class ActivityProgress extends AppCompatActivity {
         viewport.setScalableY(false);
         viewport.setMaxXAxisSize(100);
 
-        ArrayList<CScore> aScore = new ArrayList<CScore>(); //Settings.getInstance().getScore();
+        ArrayList<CScore> aScore = new ArrayList<>(); //Settings.getInstance().getScore();
 
         // simulate data
         NumberFormat fmt = NumberFormat.getInstance();
