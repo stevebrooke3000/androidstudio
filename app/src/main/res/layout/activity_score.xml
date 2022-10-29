@@ -13,21 +13,8 @@
         android:layout_height="0dp"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="1dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnClearScore"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />
-    
-    <Button
-        android:id="@+id/btnClearScore"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Clear All Scores"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/listviewScore"
-        app:layout_constraintTop_toBottomOf="@+id/listviewScore" />
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
