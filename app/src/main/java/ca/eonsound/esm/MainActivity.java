@@ -1,5 +1,7 @@
 package ca.eonsound.esm;
 
+import static ca.eonsound.esm.SampleGattAttributes.strGattUuidChar_Coefficient;
+
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,12 +12,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
+//import android.graphics.BlendMode;
+//import android.graphics.BlendModeColorFilter;
 import android.net.Uri;
 import android.os.Bundle;
 
-import java.io.*;
+//import java.io.*;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +31,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import android.widget.ProgressBar;
+
+//import android.widget.Button;
+//import android.view.View;
+//import android.view.ViewGroup;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,8 +43,10 @@ import android.widget.Toast;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+//import java.io.FileOutputStream;
+//import java.io.ObjectOutputStream;
+//import java.nio.ByteBuffer;
+//import java.nio.ByteOrder;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -55,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     final int REQUEST_CODE_SCAN = 42;
     final int REQUEST_CODE_SETTINGS = 43;
     final int REQUEST_CODE_SCORE = 44;
+    //final int REQUEST_CODE_INFO = 45;
 
     private CViewModelMain viewModelMain;
 
@@ -62,10 +72,12 @@ public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
 
     private BluetoothLeService mBluetoothLeService;
+    BluetoothGattCharacteristic characteristicCoeff;
 
     public final static UUID UUID_DEVICE_INFO = UUID.fromString(SampleGattAttributes.DEVICE_INFO_UUID);
     public final static UUID UUID_BATTERY_SERVICE = UUID.fromString(SampleGattAttributes.strGattUuidService_Battery);
     public final static UUID uuidCharacteristicBattry = UUID.fromString(SampleGattAttributes.strGattUuidCharacteristic_Battery);
+    public final static UUID uuidCharCoefficient = UUID.fromString(strGattUuidChar_Coefficient);
     public final static UUID UUID_GATT_OBJ_MODEL_NUMBER_STR = UUID.fromString(SampleGattAttributes.GATT_OBJ_MODEL_NUMBER_STR_UUID);
     public final static UUID UUID_GATT_OBJ_SERIAL_NUMBER_STR = UUID.fromString(SampleGattAttributes.GATT_OBJ_SERIAL_NUMBER_STR_UUID);
     public final static UUID UUID_GATT_OBJ_FIRMWARE_REV_STR = UUID.fromString(SampleGattAttributes.GATT_OBJ_FIRMWARE_REV_STR_UUID);
@@ -86,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
 
     // data items
     Settings settings;
+    //float afCoeff[];
+    //boolean bPendCoeffUpdate;
+
 
     //private AlertDialog dlgScore;
     private CDialogScore dlgScore;
@@ -98,7 +113,13 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
 
-        if (savedInstanceState == null) {
+        // Restore preferences
+        settings = Settings.getInstance();
+        settings.Restore(getSharedPreferences(PREFS_NAME, 0));
+
+        //bPendCoeffUpdate = false;
+
+        if ( (savedInstanceState == null) && settings.getAutoScan() ) {
             Intent intent = new Intent(this, ConnectActivity.class);
             startActivityForResult(intent, REQUEST_CODE_SCAN);
         }
@@ -110,16 +131,10 @@ public class MainActivity extends AppCompatActivity {
 
         textData = findViewById(R.id.textData);
         pbBluetooth = findViewById(R.id.pbBluetooth);
-        pbBluetooth.getProgressDrawable().setColorFilter(Color.BLUE, PorterDuff.Mode.SRC_IN);
-
-        // Restore preferences
-        settings = Settings.getInstance();
-        settings.Restore(getSharedPreferences(PREFS_NAME, 0));
 
         // plots
         graphLine = (MyGraphView) findViewById(R.id.graphLine);
         graphBar = (GraphView) findViewById(R.id.graphBar);
-        //graphHist = (GraphView) findViewById(R.id.graphHist);
 
         viewModelMain = ViewModelProviders.of(this).get(CViewModelMain.class);
 
@@ -136,14 +151,13 @@ public class MainActivity extends AppCompatActivity {
 
         Intent gattServiceIntent = new Intent(getApplicationContext(), BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-
-     }
+    }
 
     @Override
     public void onStart() {
         super.onStart();
-
     }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -161,12 +175,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        if (mBluetoothLeService != null) {
-            final boolean result = mBluetoothLeService.connect(settings.getDevAddr());
-            Log.d(TAG, "Connect request result=" + result);
+        if (true) {
+            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+            if ((mBluetoothLeService != null) && (settings.getDevAddr() != null)) {
+                final boolean result = mBluetoothLeService.connect(settings.getDevAddr());
+                Log.d(TAG, "Connect request result=" + result);
+            }
+
+            vClearPlots();
         }
-        vClearPlots();
     }
 
     @Override
@@ -182,14 +199,42 @@ public class MainActivity extends AppCompatActivity {
         else if (requestCode == REQUEST_CODE_SETTINGS && resultCode == RESULT_OK) {
             viewModelMain.vClearLines();
             vClearPlots();
-            graphLine.vSetOptimal();
+
+            if (graphLine == null)
+                Toast.makeText(this, "graphLine was null", Toast.LENGTH_LONG).show();
+
+            int code = graphLine.vSetOptimal();
+            String result = "set optimal = " + code;
+            Toast.makeText(this, result, Toast.LENGTH_LONG).show();
         }
 
         else if (requestCode == REQUEST_CODE_SCORE && resultCode == RESULT_OK) {
             viewModelMain.vReadFromFile(intent.getStringExtra("Fname"), getApplicationContext());
             vClearPlots();
-            graphLine.vSetOptimal();
+            if (graphLine == null)
+                Toast.makeText(this, "graphLine was null", Toast.LENGTH_LONG).show();
+            int code = graphLine.vSetOptimal();
+            String result = "set optimal = " + code;
+            Toast.makeText(this, result, Toast.LENGTH_LONG).show();
         }
+
+        /*else if (requestCode == REQUEST_CODE_INFO && resultCode == RESULT_OK) {
+            Log.d(TAG, "return from dev info");
+
+            if (characteristicCoeff.getUuid().equals(uuidCharCoefficient)) {
+                afCoeff = new float[2];
+                afCoeff[0] = intent.getFloatExtra("Coeff0", 0.0f);
+                afCoeff[1] = intent.getFloatExtra("Coeff1", 1.0f);
+                bPendCoeffUpdate = true;
+                byte abyCoeff[] = new byte[Float.BYTES * afCoeff.length];
+                ByteBuffer.wrap(abyCoeff).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().put(afCoeff);
+
+                Log.d(TAG, "set coefficients");
+
+                mBluetoothLeService.writeCharacteristic(characteristicCoeff, abyCoeff);
+            }
+        }
+         */
     }
 
 
@@ -241,11 +286,13 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, REQUEST_CODE_SCORE);
             return true;
         }
-        if (id == R.id.action_settings) {
+
+        else if (id == R.id.action_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivityForResult(intent, REQUEST_CODE_SETTINGS);
             return true;
         }
+
         else if (id == R.id.action_scan) {
             Intent intent = new Intent(this, ConnectActivity.class);
             startActivityForResult(intent, REQUEST_CODE_SCAN);
@@ -303,63 +350,70 @@ public class MainActivity extends AppCompatActivity {
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-                updateConnectionState(R.string.connected);
-            }
-            else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-                updateConnectionState(R.string.disconnected);
-                invalidateOptionsMenu();
-            }
-            else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-                displayGattServices(mBluetoothLeService.getSupportedGattServices());
-            }
+            if (true) {
+                if (mBluetoothLeService == null)
+                    return;
+                final String action = intent.getAction();
+                if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                    mConnected = true;
+                    updateConnectionState(R.string.connected);
+                } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                    mConnected = false;
+                    updateConnectionState(R.string.disconnected);
+                    invalidateOptionsMenu();
+                } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                    // Show all the supported services and characteristics on the user interface.
+                    displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                    String strUuid = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
 
-            else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                String strUuid = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
+                    if (strUuid.equals(SampleGattAttributes.strGattUuidCharacteristic_Battery)) {
+                        byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
+                        settings.setBattery(data[0]);
+/*
+                    if (bPendCoeffUpdate) {
+                        byte abyCoeff[] = new byte[Float.BYTES * afCoeff.length];
+                        ByteBuffer.wrap(abyCoeff).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().put(afCoeff);
 
-                if (strUuid.equals(SampleGattAttributes.strGattUuidCharacteristic_Battery)) {
-                    byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
-                    settings.setBattery(data[0]);
-                }
-                else
-                    displayData(intent.getIntExtra(BluetoothLeService.EXTRA_DATA, 0));
+                        Log.d(TAG, "set coefficients");
+
+                        mBluetoothLeService.writeCharacteristic(characteristicCoeff, abyCoeff);
+
+                        bPendCoeffUpdate = false;
+                    }
+ */
+
+                    } else
+                        displayData(intent.getIntExtra(BluetoothLeService.EXTRA_DATA, 0));
 
 
-            }
+                } else {
+                    String strUuid = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
+                    String strCharacteristic = intent.getStringExtra(BluetoothLeService.EXTRA_STRING);
+                    Log.d(TAG, "uuid: " + strUuid);
+                    Log.d(TAG, "characteristic: " + strCharacteristic);
 
+                    if (strUuid.equals(SampleGattAttributes.GATT_OBJ_MANUFACTURER_NAME_STR_UUID))
+                        settings.setManufacturer(strCharacteristic);
 
-            else {
-                String strUuid = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
-                String strCharacteristic = intent.getStringExtra(BluetoothLeService.EXTRA_STRING);
-                Log.d(TAG, "uuid: " + strUuid);
-                Log.d(TAG, "characteristic: " + strCharacteristic);
+                    else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_MODEL_NUMBER_STR_UUID))
+                        settings.setModel(strCharacteristic);
 
-                if (strUuid.equals(SampleGattAttributes.GATT_OBJ_MANUFACTURER_NAME_STR_UUID))
-                     settings.setManufacturer(strCharacteristic);
+                    else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_FIRMWARE_REV_STR_UUID))
+                        settings.setFirmware(strCharacteristic);
 
-                else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_MODEL_NUMBER_STR_UUID))
-                    settings.setModel(strCharacteristic);
+                    else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_HARDWARE_REV_STR_UUID))
+                        settings.setHardware(strCharacteristic);
 
-                else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_FIRMWARE_REV_STR_UUID))
-                    settings.setFirmware(strCharacteristic);
-
-                else if (strUuid.equals(SampleGattAttributes.GATT_OBJ_HARDWARE_REV_STR_UUID))
-                    settings.setHardware(strCharacteristic);
-
-                else if (strUuid.equals(SampleGattAttributes.GATT_CHR_UUID_MEASUREMENT_INTERVAL)) {
-                    byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
-                    int nSmpPerSec = data[0] + (data[1] << 8);
-                    float fSamplePeriod_s = 1.0f / nSmpPerSec;
-                    settings.setSamplePeriod(fSamplePeriod_s);
-                }
-
-                else if (strUuid.equals(SampleGattAttributes.strGattUuidCharacteristic_Battery)) {
-                    byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
-                    settings.setBattery(data[0]);
+                    else if (strUuid.equals(SampleGattAttributes.GATT_CHR_UUID_MEASUREMENT_INTERVAL)) {
+                        byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
+                        int nSmpPerSec = data[0] + (data[1] << 8);
+                        float fSamplePeriod_s = 1.0f / nSmpPerSec;
+                        settings.setSamplePeriod(fSamplePeriod_s);
+                    } else if (strUuid.equals(SampleGattAttributes.strGattUuidCharacteristic_Battery)) {
+                        byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_BYTES);
+                        settings.setBattery(data[0]);
+                    }
                 }
             }
         }
@@ -378,56 +432,67 @@ public class MainActivity extends AppCompatActivity {
     // In this sample, we populate the data structure that is bound to the ExpandableListView
     // on the UI.
     private void displayGattServices(List<BluetoothGattService> gattServices) {
-        if (gattServices == null)
-            return;
-        Log.d(TAG, "display gatt services");
-        for (BluetoothGattService gattService : gattServices) {
-            UUID uuidService = gattService.getUuid();
-            if (uuidService.compareTo(UUID_DEVICE_INFO) == 0) {
-                Log.d(TAG, "deviceinfo");
+        if (true) {
+            if (gattServices == null)
+                return;
 
-                List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
-                gattCharacteristics = gattService.getCharacteristics();
+            if (mBluetoothLeService == null)
+                return;
 
-                // read all device info characteristics
-                for(BluetoothGattCharacteristic characteristic : gattCharacteristics) {
-                    mBluetoothLeService.vReadCharacteristic(characteristic);
-                }
-            }
+            Log.d(TAG, "display gatt services");
+            for (BluetoothGattService gattService : gattServices) {
+                UUID uuidService = gattService.getUuid();
+                if (uuidService.compareTo(UUID_DEVICE_INFO) == 0) {
+                    Log.d(TAG, "device info service");
 
-            if (uuidService.compareTo(UUID_BATTERY_SERVICE) == 0) {
-                Log.d(TAG, "battery level");
+                    List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
+                    gattCharacteristics = gattService.getCharacteristics();
 
-                List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
-                gattCharacteristics = gattService.getCharacteristics();
-
-                // read all battery level characteristics
-                for(BluetoothGattCharacteristic characteristic : gattCharacteristics) {
-                    if ( characteristic.getUuid().equals(uuidCharacteristicBattry) )
-                        mBluetoothLeService.vSetCharacNotification(characteristic);
-                    else
+                    // read all device info characteristics
+                    for (BluetoothGattCharacteristic characteristic : gattCharacteristics) {
                         mBluetoothLeService.vReadCharacteristic(characteristic);
+                    }
+                }
+
+                if (uuidService.compareTo(UUID_BATTERY_SERVICE) == 0) {
+                    Log.d(TAG, "battery level service");
+
+                    List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
+                    gattCharacteristics = gattService.getCharacteristics();
+
+                    // read all battery level characteristics
+                    for (BluetoothGattCharacteristic characteristic : gattCharacteristics) {
+                        if (characteristic.getUuid().equals(uuidCharacteristicBattry))
+                            mBluetoothLeService.vSetCharacNotification(characteristic);
+                        else
+                            mBluetoothLeService.vReadCharacteristic(characteristic);
+                    }
+                }
+
+                if (uuidService.compareTo(UUID_BAGPIPE_MANOMETER_SRVC) == 0) {
+                    // found ESM manometer device. enable characteristic update notifications.
+                    // causes BroadcastReceiver::onReceive(ACTION_DATA_AVAILABLE) to be called
+                    //mBluetoothLeService.setCharacteristicNotification(mycharacteristic, true);
+                    Log.d(TAG, "bagpipe manometer service");
+
+                    List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
+                    gattCharacteristics = gattService.getCharacteristics();
+
+                    // read all device info characteristics
+                    for (BluetoothGattCharacteristic characteristic : gattCharacteristics) {
+                        if (characteristic.getUuid().equals(UUID_CHR_PRESSURE)) {
+                            Log.d(TAG, "bagpipe manometer pressure characteristic");
+                            mBluetoothLeService.vSetCharacNotification(characteristic);
+                        } else if (characteristic.getUuid().equals(uuidCharCoefficient)) {
+                            Log.d(TAG, "bagpipe manometer coefficient characteristic");
+                            characteristicCoeff = characteristic;
+                        } else {
+                            Log.d(TAG, "bagpipe manometer other characteristic");
+                            mBluetoothLeService.vReadCharacteristic(characteristic);
+                        }
+                    }
                 }
             }
-
-            if (uuidService.compareTo(UUID_BAGPIPE_MANOMETER_SRVC) == 0) {
-                // found ESM manometer device. enable characteristic update notifications.
-                // causes BroadcastReceiver::onReceive(ACTION_DATA_AVAILABLE) to be called
-                //mBluetoothLeService.setCharacteristicNotification(mycharacteristic, true);
-                Log.d(TAG, "bagpipe manometer service");
-
-                List<BluetoothGattCharacteristic> gattCharacteristics = new ArrayList<BluetoothGattCharacteristic>();
-                gattCharacteristics = gattService.getCharacteristics();
-
-                // read all device info characteristics
-                for (BluetoothGattCharacteristic characteristic : gattCharacteristics) {
-                    if ( characteristic.getUuid().equals(UUID_CHR_PRESSURE) )
-                        mBluetoothLeService.vSetCharacNotification(characteristic);
-                    else
-                        mBluetoothLeService.vReadCharacteristic(characteristic);
-                }
-            }
-        }
 /*
         // Loops through available GATT Services.
         boolean bFoundManometer = false;
@@ -451,7 +516,8 @@ public class MainActivity extends AppCompatActivity {
             break;
         }
 */
-        mBluetoothLeService.vRequestCharacteristics();
+            mBluetoothLeService.vRequestCharacteristics();
+        }
     }
 
 
@@ -469,103 +535,109 @@ public class MainActivity extends AppCompatActivity {
     Data plotting functions
     *******************************************************/
     private void displayData(int lPressure_raw) {
-        // update the bluetooth progress bar to show that bluetooth is working
-        int prog = pbBluetooth.getProgress() + 10;
-        if (prog > 100)
-            prog = 0;
-        pbBluetooth.setProgress(prog);
+        if (true) {
+            // update the bluetooth progress bar to show that bluetooth is working
+            int prog = pbBluetooth.getProgress() + 10;
+            if (prog > 100)
+                prog = 0;
+            pbBluetooth.setProgress(prog);
 
-        // log the raw data for debugging, the text view will be invisible for production
-        textData.setText(String.valueOf(lPressure_raw));
+            // log the raw data for debugging, the text view will be invisible for production
+            double dPressure = viewModelMain.dConvertPressure(lPressure_raw);
+            textData.setText(String.format("%.1f", dPressure));
+            CViewModelMain.EState eState = viewModelMain.appendData(dPressure, lPressure_raw);
 
-        CViewModelMain.EState eState = viewModelMain.appendData(lPressure_raw);
+            if (eState == CViewModelMain.EState.kHistRdy) {
+                vShowScore();
+            }
 
-        if (eState == CViewModelMain.EState.kHistRdy) {
-            vShowScore();
-        }
-        else if (eState == CViewModelMain.EState.kStart) {
-            if (mAlertDialog != null)
-                mAlertDialog.dismiss();
-            viewModelMain.vClearLines();
-            vClearPlots();
+            else if (eState == CViewModelMain.EState.kStart) {
+                if (mAlertDialog != null)
+                    mAlertDialog.dismiss();
+                viewModelMain.vClearLines();
+                vClearPlots();
+            }
+
         }
     }
 
     private void vShowScore() {
+if (true) {
+    NumberFormat fmt = NumberFormat.getInstance();
+    fmt.setMaximumFractionDigits(1);
+    CScore score = new CScore();
 
-        NumberFormat fmt = NumberFormat.getInstance();
-        fmt.setMaximumFractionDigits(1);
-        CScore score = new CScore();
+    score.strScore = fmt.format(viewModelMain.getSeriesHist().dGetScore());
 
-        score.strScore = fmt.format(viewModelMain.getSeriesHist().dGetScore());
+    Calendar calendar = Calendar.getInstance();
+    SimpleDateFormat fmtTstamp = new SimpleDateFormat("hh:mm:ss   MMM d, yyyy");
+    score.strTstamp = fmtTstamp.format(calendar.getTime());
 
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat fmtTstamp = new SimpleDateFormat("hh:mm:ss   MMM d, yyyy");
-        score.strTstamp = fmtTstamp.format(calendar.getTime());
+    score.strPlaytime = fmt.format(viewModelMain.getSeriesHist().dGetTime()) + " sec";
+    score.strFname = settings.getNextFname();
 
-        score.strPlaytime = fmt.format(viewModelMain.getSeriesHist().dGetTime()) + " sec";
-        score.strFname = settings.getNextFname();
+    settings.vAddScore(score);
+    viewModelMain.vSaveToFile(score.strFname, getApplicationContext());
 
-        settings.vAddScore(score);
-        viewModelMain.vSaveToFile(score.strFname, getApplicationContext());
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Score");
+    builder.setMessage("score: " + score.strScore + ",  playtime: " + score.strPlaytime);
+    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Score");
-        builder.setMessage("score: " + score.strScore + ",  playtime: " + score.strPlaytime);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        });
-        mAlertDialog = builder.create();
-        mAlertDialog.show();
-
+        }
+    });
+    mAlertDialog = builder.create();
+    mAlertDialog.show();
+}
     }
 
     private void vClearPlots() {
-        // line graph
-        graphLine.removeAllSeries();
+if (true) {
+    // line graph
+    graphLine.removeAllSeries();
 
-        graphLine.addSeries(viewModelMain.getSeriesLine());
-        graphLine.addSeries(viewModelMain.getSeriesMax());
-        graphLine.addSeries(viewModelMain.getSeriesMin());
+    graphLine.addSeries(viewModelMain.getSeriesLine());
+    graphLine.addSeries(viewModelMain.getSeriesMax());
+    graphLine.addSeries(viewModelMain.getSeriesMin());
 
-        String strUnits = settings.getUnitsName();
-        double dMaxY = settings.getUnitsMax();
+    String strUnits = settings.getUnitsName();
+    double dMaxY = settings.getUnitsMax();
 
-        // setup the line plot viewport
-        graphLine.vSetDefault();
+    // setup the line plot viewport
+    graphLine.vSetDefault();
 
-        graphLine.getGridLabelRenderer().setHighlightZeroLines(false);
-        graphLine.getGridLabelRenderer().setHorizontalLabelsVisible(true);
-        graphLine.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.BOTH);
-        graphLine.getGridLabelRenderer().setHorizontalAxisTitle("Time (s)");
-        graphLine.getGridLabelRenderer().setNumVerticalLabels(10);
+    graphLine.getGridLabelRenderer().setHighlightZeroLines(false);
+    graphLine.getGridLabelRenderer().setHorizontalLabelsVisible(true);
+    graphLine.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.BOTH);
+    graphLine.getGridLabelRenderer().setHorizontalAxisTitle("Time (s)");
+    graphLine.getGridLabelRenderer().setNumVerticalLabels(10);
 
-        // bar graph
-        graphBar.addSeries(viewModelMain.getSeriesBar());
-        graphBar.getViewport().setYAxisBoundsManual(true);
-        graphBar.getViewport().setXAxisBoundsManual(true);
-        graphBar.getViewport().setMinY(0);
-        graphBar.getViewport().setMinX(0);
-        graphBar.getViewport().setMaxX(1);
-        graphBar.getGridLabelRenderer().setHorizontalLabelsVisible(true);
-        graphBar.getGridLabelRenderer().setVerticalLabelsVisible(true);
-        graphBar.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
-        graphBar.getGridLabelRenderer().setNumVerticalLabels(10);
-        graphBar.getGridLabelRenderer().setNumHorizontalLabels(1);
-        graphBar.getGridLabelRenderer().setHorizontalAxisTitle(" ");
+    // bar graph
+    graphBar.addSeries(viewModelMain.getSeriesBar());
+    graphBar.getViewport().setYAxisBoundsManual(true);
+    graphBar.getViewport().setXAxisBoundsManual(true);
+    graphBar.getViewport().setMinY(0);
+    graphBar.getViewport().setMinX(0);
+    graphBar.getViewport().setMaxX(1);
+    graphBar.getGridLabelRenderer().setHorizontalLabelsVisible(true);
+    graphBar.getGridLabelRenderer().setVerticalLabelsVisible(true);
+    graphBar.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
+    graphBar.getGridLabelRenderer().setNumVerticalLabels(10);
+    graphBar.getGridLabelRenderer().setNumHorizontalLabels(1);
+    graphBar.getGridLabelRenderer().setHorizontalAxisTitle(" ");
 
-        graphLine.getGridLabelRenderer().setVerticalAxisTitle(strUnits);
-        graphLine.onDataChanged(false, false);
-        graphLine.getGridLabelRenderer().setVerticalAxisTitle(strUnits);
-        graphLine.onDataChanged(false, false);
+    graphLine.getGridLabelRenderer().setVerticalAxisTitle(strUnits);
+    graphLine.onDataChanged(false, false);
+    graphLine.getGridLabelRenderer().setVerticalAxisTitle(strUnits);
+    graphLine.onDataChanged(false, false);
 
-        graphBar.getViewport().setMaxY(dMaxY);
-        graphBar.onDataChanged(false, false);
-        graphBar.getViewport().setMaxY(dMaxY);
-        graphBar.onDataChanged(false, false);
+    graphBar.getViewport().setMaxY(dMaxY);
+    graphBar.onDataChanged(false, false);
+    graphBar.getViewport().setMaxY(dMaxY);
+    graphBar.onDataChanged(false, false);
+}
     }
 
     @Override
@@ -585,4 +657,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 }
