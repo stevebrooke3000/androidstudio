@@ -1,22 +1,23 @@
 package ca.eonsound.esm;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
+import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class SettingsActivity extends AppCompatActivity {
     RadioGroup rgUnits;
     SeekBar sbThreshold, sbDelay, sbSmooth;
+    CheckBox cbAutoScan;
     Button btnOK;
     TextView tvThold, tvDelay, tvSmooth;
     private String mDeviceAddress;
@@ -35,6 +36,10 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        // back action
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
         // restore activity state from settings
         settings = Settings.getInstance();
         oldThold = settings.getThreshold_sbu();
@@ -50,6 +55,8 @@ public class SettingsActivity extends AppCompatActivity {
         sbDelay = findViewById(R.id.seekbarDelay);
         tvSmooth = findViewById(R.id.tvSmooth);
         sbSmooth = findViewById(R.id.seekbarSmooth);
+        cbAutoScan = findViewById(R.id.checkboxAutoScan);
+
         btnOK = findViewById(R.id.btnOK);
 
         // restore UI states
@@ -66,6 +73,8 @@ public class SettingsActivity extends AppCompatActivity {
         sbThreshold.setProgress(oldThold);
         sbDelay.setProgress(oldDelay);
         sbSmooth.setProgress(oldSmooth);
+        cbAutoScan.setChecked(settings.getAutoScan());
+
         vUpdateTextViews();
 
 
@@ -111,15 +120,28 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        cbAutoScan.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view) {
+                settings.setAutoScan(cbAutoScan.isChecked());
+            }
+
+        });
+
         rgUnits.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch (rgUnits.getCheckedRadioButtonId()) {
-                    case R.id.rbInchesH2O: settings.setUnits(Settings.EUnits.INCH_H2O); break;
-                    case R.id.rbKPa:       settings.setUnits(Settings.EUnits.KPA); break;
-                    case R.id.rbmmHg:      settings.setUnits(Settings.EUnits.MM_HG); break;
-                    case R.id.rbPSI:       settings.setUnits(Settings.EUnits.PSI); break;
-                }
+                int buttonId = rgUnits.getCheckedRadioButtonId();
+                if (buttonId == R.id.rbInchesH2O)
+                    settings.setUnits(Settings.EUnits.INCH_H2O);
+                else if (buttonId == R.id.rbKPa)
+                    settings.setUnits(Settings.EUnits.KPA);
+                else if (buttonId == R.id.rbmmHg)
+                    settings.setUnits(Settings.EUnits.MM_HG);
+                else
+                    settings.setUnits(Settings.EUnits.PSI);
+                
                 vUpdateTextViews();
             }
         });
@@ -146,6 +168,17 @@ public class SettingsActivity extends AppCompatActivity {
             settings.setSmooth(oldSmooth);
             settings.setUnits(oldUnits);
         }
+    }
+
+    // this event will enable the back function to the button on press
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     void vUpdateTextViews() {
