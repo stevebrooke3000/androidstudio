@@ -2,7 +2,6 @@ package ca.eonsound.esm;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
@@ -10,7 +9,6 @@ import androidx.core.view.GestureDetectorCompat;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.Viewport;
-import com.jjoe64.graphview.series.Series;
 
 public class MyGraphView extends GraphView  {
     public MyGraphView(Context context) {
@@ -63,10 +61,8 @@ public class MyGraphView extends GraphView  {
 
         @Override
         public void onLongPress(MotionEvent e) {
-            java.util.List<Series> 	listSeries = getSeries();
-            Series series = listSeries.get(0);
-            double dMaxX = series.getHighestValueX();
-            double dMinX = series.getLowestValueX();
+            double dMaxX = getSeries().get(0).getHighestValueX();
+            double dMinX = getSeries().get(0).getLowestValueX();
             if (dMinX < dMaxX - 3000)
                 dMinX = dMaxX - 3000;
 
@@ -79,14 +75,13 @@ public class MyGraphView extends GraphView  {
         }
     }
 
-    void vSetOptimal() {
+    int vSetOptimal() {
 
         Viewport viewport = getViewport();
+        if (viewport == null)
+            return -1;
 
-        java.util.List<Series> 	listSeries = getSeries();
-        Series series = listSeries.get(0);
-
-        if (series.isEmpty()) {
+        if (getSeries().get(0).isEmpty()) {
             viewport.setMinX(0);
             viewport.setMaxX(10);
             viewport.setMinY(0); // max Y is determined by the scale, see vUpdateScale
@@ -95,13 +90,13 @@ public class MyGraphView extends GraphView  {
             viewport.setYAxisBoundsManual(true);
 
             onDataChanged(true, false);
-            return;
+            return 0;
         }
 
-        double dMaxY = series.getHighestValueY() * 1.05;
-        double dMinY = series.getLowestValueY() * 0.95;
-        double dMaxX = series.getHighestValueX();
-        double dMinX = series.getLowestValueX();
+        double dMaxY = getSeries().get(0).getHighestValueY() * 1.05;
+        double dMinY = getSeries().get(0).getLowestValueY() * 0.95;
+        double dMaxX = getSeries().get(0).getHighestValueX();
+        double dMinX = getSeries().get(0).getLowestValueX();
 
         double dTime = dMaxX - dMinX;
 
@@ -127,15 +122,13 @@ public class MyGraphView extends GraphView  {
 //        viewport.setYAxisBoundsManual(false);
         onDataChanged(true, false);
 
-
+        return 1;
     }
 
     void vSetDefault() {
         Viewport viewport = getViewport();
 
-        java.util.List<Series> 	listSeries = getSeries();
-        Series series = listSeries.get(0);
-        double dMaxX = series.getHighestValueX();
+        double dMaxX = getSeries().get(0).getHighestValueX();
 
         viewport.setMinX(dMaxX - 10);
         viewport.setMaxX(dMaxX);
