@@ -1,5 +1,6 @@
 package ca.eonsound.esm;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -21,6 +22,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -65,6 +67,11 @@ public class ConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect);
         Toast.makeText(this, "select manometer device", Toast.LENGTH_LONG).show();
 
+        // back action
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
         bScanning = false;
         btnScan = findViewById(R.id.btnScan);
         progressScanning = findViewById(R.id.progressScan);
@@ -105,9 +112,9 @@ public class ConnectActivity extends AppCompatActivity {
             }
         }
 
-        /*************************
+        /*
          the listeners
-         *************************/
+        */
         // user has selected the device
         listviewDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -153,9 +160,21 @@ public class ConnectActivity extends AppCompatActivity {
 
     }
 
+    // this event will enable the back function to the button on press
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     // object classes
     // Adapter for holding devices found through scanning.
-    private class LeDeviceListAdapter extends ArrayAdapter<BluetoothDevice> {
+    private static class LeDeviceListAdapter extends ArrayAdapter<BluetoothDevice> {
         private ArrayList<BluetoothDevice> mLeDevices;
 
         private LeDeviceListAdapter(Context context, int textViewResourceId, ArrayList<BluetoothDevice> objects) {
@@ -200,7 +219,8 @@ public class ConnectActivity extends AppCompatActivity {
                 viewHolder.deviceAddress = view.findViewById(R.id.device_address);
                 viewHolder.deviceName = view.findViewById(R.id.device_name);
                 view.setTag(viewHolder);
-            } else {
+            }
+            else {
                 viewHolder = (ViewHolder) view.getTag();
             }
 
@@ -220,7 +240,7 @@ public class ConnectActivity extends AppCompatActivity {
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.i(TAG, "scan result callbackType:" + String.valueOf(callbackType));
+            Log.i(TAG, "scan result callbackType:" + callbackType);
             Log.i(TAG, "scan result:" + result.toString());
 
             BluetoothDevice device = result.getDevice();
@@ -261,6 +281,9 @@ public class ConnectActivity extends AppCompatActivity {
     };
 
     private void scanLeDevice(final boolean enable) {
+        if (mBluetoothAdapter.getBluetoothLeScanner() == null)
+            return;
+
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
