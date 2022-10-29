@@ -1,31 +1,22 @@
 package ca.eonsound.esm;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 
 public class ScoreActivity extends AppCompatActivity {
@@ -33,7 +24,7 @@ public class ScoreActivity extends AppCompatActivity {
     /*ListView listViewScore;
     AdapterScore customAdapter;
      */
-    Button btnClear;
+    //Button btnClear;
     ArrayList<CScore> listScores;
     RecyclerView rvScores;
     CScoresAdapter adapter;
@@ -43,7 +34,12 @@ public class ScoreActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_score);
 
-        rvScores = (RecyclerView) findViewById(R.id.listviewScore);
+        // back action
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
+        rvScores = findViewById(R.id.listviewScore);
 
         listScores = Settings.getInstance().getScore();
         adapter = new CScoresAdapter(listScores);
@@ -87,8 +83,9 @@ public class ScoreActivity extends AppCompatActivity {
                 CScore score = listScores.get(position);
                 score.vToggleLock();
 
-                CScoresAdapter.ViewHolder viewholder = (CScoresAdapter.ViewHolder)rvScores.findViewHolderForAdapterPosition(position);
-                viewholder.vSetLocked(v, score.bIsLocked());
+                CScoresAdapter.ViewHolder viewHolder = (CScoresAdapter.ViewHolder)rvScores.findViewHolderForAdapterPosition(position);
+                if (viewHolder != null)
+                    viewHolder.vSetLocked(v, score.bIsLocked());
 
                 String strSnack = score.bIsLocked() ? "Score is locked" : "Score is unlocked";
                 Snackbar.make(v, strSnack, Snackbar.LENGTH_LONG).show();
@@ -98,26 +95,30 @@ public class ScoreActivity extends AppCompatActivity {
             public void onSwipe(final int position/*, View v*/) {
                 // store item list
                 final CScore score = listScores.get(position);
-                //adapter.deleteItem((position));
+                if (score.bIsLocked())
+                    return;
+
                 // remove item from the list
                 listScores.remove(position);
                 adapter.notifyItemRemoved(position);
-                Snackbar snackbar = Snackbar.make(rvScores, "Item removed from the list.", Snackbar.LENGTH_LONG);
+                Snackbar snackbar = Snackbar.make(rvScores, "Score deleted from the list.", Snackbar.LENGTH_LONG);
                 snackbar.addCallback(new Snackbar.Callback() {
                     @Override
                     public void onDismissed(Snackbar snackbar, int event) {
                         if (event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
                             // delete the file
-                            Object obj = new Object();
-                            try {
-                                File dir = getFilesDir();
-                                File file = new File(dir, score.strFname);
-                                boolean deleted = file.delete();
+                            //Object obj = new Object();
+                            if (score.strFname != null) {
+                                try {
+                                    File dir = getFilesDir();
+                                    File file = new File(dir, score.strFname);
+                                    file.delete();
+                                } catch (Exception e) {
+                                    System.out.println(e.toString());
+                                    System.exit(1);
+                                }
                             }
-                            catch (Exception e) {
-                                System.out.println (e.toString ());
-                                System.exit (1);
-                            }
+                            Settings.getInstance().vDeleteScore(score);
                         }
                     }
                 });
@@ -134,10 +135,10 @@ public class ScoreActivity extends AppCompatActivity {
             }
         });
 
-
+/*
         btnClear = findViewById(R.id.btnClearScore);
         /* button listener */
-        btnClear.setOnClickListener(new View.OnClickListener() {
+/*        btnClear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
@@ -183,7 +184,7 @@ public class ScoreActivity extends AppCompatActivity {
                                 }
                             }
                             */
-
+/*
                             adapter.notifyDataSetChanged();
                             // TBD clean up
                             /*
@@ -204,7 +205,7 @@ public class ScoreActivity extends AppCompatActivity {
                             }
 
                              */
-                        }
+  /*                      }
 
                         finish();
                     }
@@ -220,7 +221,7 @@ public class ScoreActivity extends AppCompatActivity {
 
             }
         });
-
+*/
     }
 
     @Override
@@ -237,14 +238,68 @@ public class ScoreActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        if (id == R.id.action_delete_unlocked_scores) {
+            AlertDialog mAlertDialog;
+            AlertDialog.Builder builder = new AlertDialog.Builder(ScoreActivity.this);
+            builder.setTitle("Clear all unlocked scores");
+            builder.setMessage("are you sure?");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // OK, clear the scores, update the screen and return
+
+                    for (int i = listScores.size() - 1; i >= 0; i--) {
+                        CScore score = listScores.get(i);
+                        if (score.bIsLocked())
+                            continue;
+
+                        if (score.strFname != null) {
+                            try {
+                                File dir = getFilesDir();
+                                File file = new File(dir, score.strFname);
+                                file.delete();
+                            } catch (Exception e) {
+                                System.out.println(e.toString());
+                                System.exit(1);
+                            }
+                        }
+                        listScores.remove(i);
+                        adapter.notifyItemRemoved(i);
+                        Settings.getInstance().vDeleteScore(score);
+                    }
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {}
+            });
+
+            mAlertDialog = builder.create();
+            mAlertDialog.show();
+
+        }
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_show_progress) {
+        else if (id == R.id.action_show_progress) {
             Intent intent = new Intent(this, ActivityProgress.class);
             startActivity(intent);
             return true;
         }
+        else if (id == android.R.id.home) {
+                this.finish();
+                return true;
+        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+}
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
 }
