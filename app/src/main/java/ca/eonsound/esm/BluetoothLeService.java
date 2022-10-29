@@ -16,6 +16,8 @@
 
 package ca.eonsound.esm;
 
+import static android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
+
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -212,8 +214,8 @@ public class BluetoothLeService extends Service {
             return false;
         }
 
-        listCharacToRead = new ArrayList<BluetoothGattCharacteristic>();
-        listCharacNotifications = new ArrayList<BluetoothGattCharacteristic>();
+        listCharacToRead = new ArrayList<>();
+        listCharacNotifications = new ArrayList<>();
 
 
             return true;
@@ -236,8 +238,7 @@ public class BluetoothLeService extends Service {
         }
 
         // Previously connected device.  Try to reconnect.
-        if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress)
-                && mBluetoothGatt != null) {
+        if ((mBluetoothDeviceAddress != null) && address.equals(mBluetoothDeviceAddress) && (mBluetoothGatt != null) ) {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
@@ -300,6 +301,16 @@ public class BluetoothLeService extends Service {
             return;
         }
         mBluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        characteristic.setValue(value);
+        characteristic.setWriteType(WRITE_TYPE_NO_RESPONSE);
+        mBluetoothGatt.writeCharacteristic(characteristic/*, value, writeType*/);
     }
 
     /**
