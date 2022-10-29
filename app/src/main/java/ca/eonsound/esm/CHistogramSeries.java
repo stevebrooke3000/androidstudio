@@ -1,13 +1,12 @@
 package ca.eonsound.esm;
 
 import com.jjoe64.graphview.series.BarGraphSeries;
-import com.jjoe64.graphview.series.BaseSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.Series;
 
 import java.util.Iterator;
 
-public class CHistogramSeries extends BarGraphSeries {
+public class CHistogramSeries extends BarGraphSeries<DataPoint> {
 
     protected double dMax, dMin, dScale;
     protected int nBins;
