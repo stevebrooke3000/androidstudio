@@ -15,8 +15,8 @@ android {
         applicationId "ca.eonsound.esm"
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 27
-        versionName "1.3.18"
+        versionCode 34
+        versionName "1.3.25"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.release
 
