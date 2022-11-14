@@ -1,6 +1,9 @@
 package ca.eonsound.esm;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +41,7 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
         TextView viewScore;
         TextView viewTstamp;
         TextView viewPlaytime;
+        int colorBG = Color.TRANSPARENT;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
@@ -69,7 +73,7 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
             if (bLock)
                 v.setBackgroundColor(v.getContext().getResources().getColor(android.R.color.holo_orange_light, v.getContext().getTheme()));
             else
-                v.setBackgroundColor(v.getContext().getResources().getColor(android.R.color.background_light, v.getContext().getTheme()));
+                v.setBackgroundColor(colorBG);
         }
     }
 
@@ -96,10 +100,16 @@ public class CScoresAdapter extends RecyclerView.Adapter<CScoresAdapter.ViewHold
         holder.viewPlaytime.setText(score.strPlaytime);
 
         View v = holder.itemView;
+
+        Drawable background = v.getBackground();
+        if (background instanceof ColorDrawable)
+            holder.colorBG = ( (ColorDrawable) background).getColor();
+
         if (score.bIsLocked())
             v.setBackgroundColor(v.getContext().getResources().getColor(android.R.color.holo_orange_light, v.getContext().getTheme()));
-        else
-            v.setBackgroundColor(v.getContext().getResources().getColor(android.R.color.background_light, v.getContext().getTheme()));
+        else {
+                v.setBackgroundColor(holder.colorBG);
+        }
     }
 
     @Override
