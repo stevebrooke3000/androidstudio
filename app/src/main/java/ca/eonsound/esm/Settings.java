@@ -70,6 +70,7 @@ public class Settings {
         iDelay_sbu = sharedprefs.getInt("delay", 0);
         iSmooth_sbu = sharedprefs.getInt("smooth", 0);
         bAutoScan = sharedprefs.getBoolean("autoscan", false);
+        bUse_mmHg = sharedprefs.getBoolean("use_mmHg", false);
         iNextFileIdx = sharedprefs.getInt("fileidx", 0);
 
         eUnits = EUnits.INCH_H2O;
@@ -95,6 +96,7 @@ public class Settings {
         editor.putInt("delay",iDelay_sbu);
         editor.putInt("smooth", iSmooth_sbu);
         editor.putBoolean("autoscan", bAutoScan);
+        editor.putBoolean("use_mmHg", bUse_mmHg);
         editor.putInt("units", eUnits.ordinal());
         editor.putInt("fileidx", iNextFileIdx);
 
@@ -211,7 +213,7 @@ public class Settings {
 
     public void setFirmware(String _strFirmware) {
         strFirmware = _strFirmware;
-        bUse_mmHg = versionCompare("V1.0.2", strFirmware) >= 0;
+        bUse_mmHg = versionCompare(strFirmware, "V1.0.2") >= 0;
     }
     public String getFirmware() { return strFirmware; }
 
