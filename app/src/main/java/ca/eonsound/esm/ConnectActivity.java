@@ -101,17 +101,6 @@ public class ConnectActivity extends AppCompatActivity {
         scanSetting = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         filterList = new ArrayList<>();
 
-
-        // Bluetooth requires location permission. Ask to enable if not already enabled
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-            else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
-        }
-
         /*
          the listeners
         */
@@ -170,7 +159,6 @@ public class ConnectActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     // object classes
     // Adapter for holding devices found through scanning.
