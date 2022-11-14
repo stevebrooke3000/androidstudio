@@ -15,6 +15,7 @@ import android.content.res.Configuration;
 //import android.graphics.BlendMode;
 //import android.graphics.BlendModeColorFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 //import java.io.*;
@@ -22,6 +23,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProviders;
 
@@ -94,18 +96,15 @@ public class MainActivity extends AppCompatActivity {
     // line plot graph for pressure history display
     MyGraphView graphLine; // the line plot graph
     GraphView graphBar; // bar plot graph for instantaneous pressure display
-    //GraphView graphHist; // histogramplot
 
     // data items
     Settings settings;
-    //float afCoeff[];
-    //boolean bPendCoeffUpdate;
 
 
-    //private AlertDialog dlgScore;
     private CDialogScore dlgScore;
     private AlertDialog mAlertDialog;
 
+    public static final String[]    astrPermissions = { Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT} ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,11 +112,35 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
 
+
+        // Bluetooth requires location permission. Ask to enable if not already enabled
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            String[] astrPermissions = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN};
+            for (String strPermission : astrPermissions) {
+                if (ContextCompat.checkSelfPermission(this, strPermission) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, astrPermissions, 1);
+                    break;
+                }
+            }
+        }
+
+        else
+        {
+            String strMfestLocation = Manifest.permission.ACCESS_FINE_LOCATION;
+            if (ContextCompat.checkSelfPermission(this, strMfestLocation) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, strMfestLocation)) {
+                    ActivityCompat.requestPermissions(this, new String[]{strMfestLocation}, 1);
+                }
+                else {
+                    ActivityCompat.requestPermissions(this, new String[]{strMfestLocation}, 1);
+                }
+            }
+        }
+
         // Restore preferences
         settings = Settings.getInstance();
         settings.Restore(getSharedPreferences(PREFS_NAME, 0));
-
-        //bPendCoeffUpdate = false;
+        settings.setFirmware("V1.0.0");
 
         if ( (savedInstanceState == null) && settings.getAutoScan() ) {
             Intent intent = new Intent(this, ConnectActivity.class);
@@ -197,15 +220,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         else if (requestCode == REQUEST_CODE_SETTINGS && resultCode == RESULT_OK) {
-            viewModelMain.vClearLines();
+            viewModelMain.vClearLines(getResources());
             vClearPlots();
 
             if (graphLine == null)
                 Toast.makeText(this, "graphLine was null", Toast.LENGTH_LONG).show();
 
             int code = graphLine.vSetOptimal();
-            String result = "set optimal = " + code;
-            Toast.makeText(this, result, Toast.LENGTH_LONG).show();
         }
 
         else if (requestCode == REQUEST_CODE_SCORE && resultCode == RESULT_OK) {
@@ -214,27 +235,7 @@ public class MainActivity extends AppCompatActivity {
             if (graphLine == null)
                 Toast.makeText(this, "graphLine was null", Toast.LENGTH_LONG).show();
             int code = graphLine.vSetOptimal();
-            String result = "set optimal = " + code;
-            Toast.makeText(this, result, Toast.LENGTH_LONG).show();
         }
-
-        /*else if (requestCode == REQUEST_CODE_INFO && resultCode == RESULT_OK) {
-            Log.d(TAG, "return from dev info");
-
-            if (characteristicCoeff.getUuid().equals(uuidCharCoefficient)) {
-                afCoeff = new float[2];
-                afCoeff[0] = intent.getFloatExtra("Coeff0", 0.0f);
-                afCoeff[1] = intent.getFloatExtra("Coeff1", 1.0f);
-                bPendCoeffUpdate = true;
-                byte abyCoeff[] = new byte[Float.BYTES * afCoeff.length];
-                ByteBuffer.wrap(abyCoeff).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().put(afCoeff);
-
-                Log.d(TAG, "set coefficients");
-
-                mBluetoothLeService.writeCharacteristic(characteristicCoeff, abyCoeff);
-            }
-        }
-         */
     }
 
 
@@ -301,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
         else if (id == R.id.action_clear) {
             // clear the graph data
-            viewModelMain.vClearLines();
+            viewModelMain.vClearLines(getResources());
             vClearPlots();
         }
 
@@ -320,6 +321,24 @@ public class MainActivity extends AppCompatActivity {
             finish();
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
+        Log.d(TAG, "on request permission result");
+        switch (requestCode){
+            case 1: {
+                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                        Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else {
+                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+        }
     }
 
     // Code to manage Service lifecycle.
@@ -535,34 +554,30 @@ public class MainActivity extends AppCompatActivity {
     Data plotting functions
     *******************************************************/
     private void displayData(int lPressure_raw) {
-        if (true) {
-            // update the bluetooth progress bar to show that bluetooth is working
-            int prog = pbBluetooth.getProgress() + 10;
-            if (prog > 100)
-                prog = 0;
-            pbBluetooth.setProgress(prog);
+        // update the bluetooth progress bar to show that bluetooth is working
+        int prog = pbBluetooth.getProgress() + 10;
+        if (prog > 100)
+            prog = 0;
+        pbBluetooth.setProgress(prog);
 
-            // log the raw data for debugging, the text view will be invisible for production
-            double dPressure = viewModelMain.dConvertPressure(lPressure_raw);
-            textData.setText(String.format("%.1f", dPressure));
-            CViewModelMain.EState eState = viewModelMain.appendData(dPressure, lPressure_raw);
+        // log the raw data for debugging, the text view will be invisible for production
+        double dPressure = viewModelMain.dConvertPressure(lPressure_raw);
+        textData.setText(String.format("%.1f", dPressure));
+        CViewModelMain.EState eState = viewModelMain.appendData(dPressure, lPressure_raw);
 
-            if (eState == CViewModelMain.EState.kHistRdy) {
-                vShowScore();
-            }
+        if (eState == CViewModelMain.EState.kHistRdy) {
+            vShowScore();
+        }
 
-            else if (eState == CViewModelMain.EState.kStart) {
-                if (mAlertDialog != null)
-                    mAlertDialog.dismiss();
-                viewModelMain.vClearLines();
-                vClearPlots();
-            }
-
+        else if (eState == CViewModelMain.EState.kStart) {
+            if (mAlertDialog != null)
+                mAlertDialog.dismiss();
+            viewModelMain.vClearLines(getResources());
+            vClearPlots();
         }
     }
 
     private void vShowScore() {
-if (true) {
     NumberFormat fmt = NumberFormat.getInstance();
     fmt.setMaximumFractionDigits(1);
     CScore score = new CScore();
@@ -590,11 +605,9 @@ if (true) {
     });
     mAlertDialog = builder.create();
     mAlertDialog.show();
-}
     }
 
     private void vClearPlots() {
-if (true) {
     // line graph
     graphLine.removeAllSeries();
 
@@ -637,25 +650,6 @@ if (true) {
     graphBar.onDataChanged(false, false);
     graphBar.getViewport().setMaxY(dMaxY);
     graphBar.onDataChanged(false, false);
-}
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
-        Log.d(TAG, "on request permission result");
-        switch (requestCode){
-            case 1: {
-                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                        Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
-                    }
-                }
-                else {
-                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
-                }
-                return;
-            }
-        }
     }
 
 }
