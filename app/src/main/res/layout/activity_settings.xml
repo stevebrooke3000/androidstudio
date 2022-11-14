@@ -60,7 +60,7 @@
         android:id="@+id/checkboxAutoScan"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:contentDescription="connect to ESM1on startup"
+        android:contentDescription="connect to ESM1 on startup"
         android:maxHeight="48dp"
         android:minHeight="48dp"
         android:text="Auto scan for device on startup" />
