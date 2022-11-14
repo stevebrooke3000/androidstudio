@@ -1,12 +1,15 @@
 package ca.eonsound.esm;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 //import android.os.Environment;
 
 import androidx.lifecycle.ViewModel;
 
 import java.io.*;
+import java.lang.Object;
 //import java.io.Serializable;
 //import java.io.BufferedReader;
 //import java.io.FileInputStream;
@@ -195,15 +198,17 @@ public class CViewModelMain extends ViewModel {
         return eState;
     }
 
-    public void vClearLines() {
+    public void vClearLines(Resources res) {
         seriesLine = new LineGraphSeries<>();
         seriesMax = new LineGraphSeries<>();
         seriesMin = new LineGraphSeries<>();
 
         // set up the line plot colors
-        seriesLine.setColor(Color.BLUE);
+        seriesLine.setColor(res.getColor(R.color.colorWater));
         seriesMax.setColor(Color.RED);
         seriesMin.setColor(Color.rgb(255,165,0)); // orange
+
+        getSeriesBar().setColor(res.getColor(R.color.colorWater));
 
         dMaxPressure = 0;
         dMinPressure = 1000;
@@ -253,8 +258,9 @@ public class CViewModelMain extends ViewModel {
 
         if (obj instanceof CPressureFile) {
             CPressureFile filePressure = (CPressureFile) obj;
+            Resources res = context.getResources();
 
-            vClearLines();
+            vClearLines(res);
             for (int i = 0; i < filePressure.nSamples; i++) {
                 int lPressure = filePressure.alPressure[i];
                 double dPressure = dConvertPressure(lPressure);
