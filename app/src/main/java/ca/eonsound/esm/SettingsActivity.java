@@ -15,7 +15,7 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 public class SettingsActivity extends AppCompatActivity {
-    RadioGroup rgUnits;
+    //RadioGroup rgUnits;
     SeekBar sbThreshold, sbDelay, sbSmooth;
     CheckBox cbAutoScan;
     Button btnOK;
@@ -48,7 +48,7 @@ public class SettingsActivity extends AppCompatActivity {
         oldUnits = settings.getUnits();
 
         // set UI controls
-        rgUnits = findViewById(R.id.radioGroup);
+        //rgUnits = findViewById(R.id.radioGroup);
         tvThold = findViewById(R.id.tvThold);
         sbThreshold = findViewById(R.id.seekbarThold);
         tvDelay = findViewById(R.id.tvDelay);
@@ -60,7 +60,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnOK = findViewById(R.id.btnOK);
 
         // restore UI states
-        RadioButton radio;
+        /*RadioButton radio;
         switch (oldUnits) {
             default:
             case INCH_H2O: radio = findViewById(R.id.rbInchesH2O); break;
@@ -69,6 +69,8 @@ public class SettingsActivity extends AppCompatActivity {
             case PSI:      radio = findViewById(R.id.rbPSI); break;
         }
         radio.setChecked(true);
+
+         */
 
         sbThreshold.setProgress(oldThold);
         sbDelay.setProgress(oldDelay);
@@ -129,7 +131,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         });
 
-        rgUnits.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+        /*rgUnits.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 int buttonId = rgUnits.getCheckedRadioButtonId();
@@ -145,6 +147,8 @@ public class SettingsActivity extends AppCompatActivity {
                 vUpdateTextViews();
             }
         });
+
+         */
 
         btnOK.setOnClickListener(new View.OnClickListener() {
             @Override
